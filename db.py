@@ -3,7 +3,8 @@ import re
 import logging
 from typing import Dict, List, Optional
 
-from langchain_community.graphs import Neo4jGraph
+# from langchain_community.graphs import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def connect_to_neo4j() -> Optional[Neo4jGraph]:
             password=password
         )
         graph.query("RETURN 1")  # connection test
-        logger.info("Connected to Neo4j successfully")
+        logger.info("\nConnected to Neo4j successfully")
         return graph
     except Exception as e:
         logger.error("Neo4j connection failed: %s", e, exc_info=True)
@@ -77,20 +78,40 @@ def db_inquire(graph: Neo4jGraph, triple: Dict) -> List[str]:
     if not entity:
         return []
 
-    cypher = """
-    MATCH (e:Entity {name: $ent})-[r]-(other:Entity)
+    # 1️⃣ Case-insensitive exact match
+    cypher_exact = """
+    MATCH (e:Entity)-[r]-(other:Entity)
+    WHERE toLower(e.name) = toLower($ent)
     RETURN e.name AS center,
            type(r) AS rel,
            other.name AS target,
            CASE WHEN startNode(r) = e THEN '→' ELSE '←' END AS dir
     ORDER BY rel
-    LIMIT 12
+    LIMIT 15
+    """
+
+    # 2️⃣ Fuzzy fallback: partial name CONTAINS match
+    cypher_fuzzy = """
+    MATCH (e:Entity)-[r]-(other:Entity)
+    WHERE toLower(e.name) CONTAINS toLower($ent)
+    RETURN e.name AS center,
+           type(r) AS rel,
+           other.name AS target,
+           CASE WHEN startNode(r) = e THEN '→' ELSE '←' END AS dir
+    ORDER BY e.name, rel
+    LIMIT 15
     """
 
     try:
-        rows = graph.query(cypher, {"ent": entity})
+        rows = graph.query(cypher_exact, {"ent": entity})
+
         if not rows:
-            return [f"No information about {entity}."]
+            # Try fuzzy search before giving up
+            rows = graph.query(cypher_fuzzy, {"ent": entity})
+            if rows:
+                logger.info("Exact match not found for '%s'; using fuzzy results.", entity)
+            else:
+                return [f"No information about '{entity}' found in the database."]
 
         return [
             f"{r['center']} {r['dir']} [{r['rel']}] {r['target']}"

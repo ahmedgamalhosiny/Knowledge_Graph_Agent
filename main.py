@@ -12,6 +12,12 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 
+# Silence noisy third-party loggers
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("neo4j").setLevel(logging.WARNING)
+logging.getLogger("neo4j.notifications").setLevel(logging.WARNING)
+
 def main():
     load_dotenv()
     
