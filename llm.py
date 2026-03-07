@@ -3,13 +3,12 @@ import json
 import logging
 from typing import Dict, List, Any
 
-from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import SystemMessage, HumanMessage
+from llama_index.llms.groq import Groq
+from llama_index.core.llms import ChatMessage, MessageRole
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "openai/gpt-oss-120b"
+MODEL_NAME = "llama-3.3-70b-versatile"
 
 CLASSIFIER_SYSTEM = """
 **ROLE**
@@ -60,44 +59,45 @@ Turn the raw database result into a short, natural, friendly conversational answ
 - Keep answers concise — 1 to 3 sentences max.
 
 **EXAMPLES**
-- DB: "Stored/updated: Ahmed LIVES_IN Cairo"  
+- DB: "Stored/updated: Ahmed LIVES_IN Cairo"
   Output: "Got it! Ahmed now lives in Cairo."
 
-- DB: "No information about 'Banana' found in the database."  
+- DB: "No information about 'Banana' found in the database."
   Output: "I don't have any information about Banana stored yet."
 
-- DB: Multiple facts about Ahmed  
+- DB: Multiple facts about Ahmed
   Output: "Ahmed lives in Cairo and works at ODC."
 """.strip()
 
-def create_llm(temperature: float = 0.1) -> ChatGroq:
+
+def create_llm(temperature: float = 0.1) -> Groq:
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         raise ValueError("GROQ_API_KEY not found in environment")
 
-    return ChatGroq(
+    return Groq(
         model=MODEL_NAME,
         api_key=api_key,
         temperature=temperature,
     )
 
-def parse_command(
-    llm: ChatGroq,
-    text: str,
-    history: List[Any]
-) -> Dict[str, Any]:
-    prompt = ChatPromptTemplate.from_messages([
-        SystemMessage(content=CLASSIFIER_SYSTEM),
-        MessagesPlaceholder("history"),
-        HumanMessage(content=text),
-    ])
+
+def parse_command(llm: Groq, text: str, history: List[ChatMessage]) -> Dict[str, Any]:
+    """
+    Build a message list: system + history + current user message,
+    send to Groq, parse the JSON response into {intent, triples}.
+    """
+    messages: List[ChatMessage] = [
+        ChatMessage(role=MessageRole.SYSTEM, content=CLASSIFIER_SYSTEM),
+        *history,
+        ChatMessage(role=MessageRole.USER, content=text),
+    ]
 
     try:
-        chain = prompt | llm
-        resp = chain.invoke({"history": history})
-        content = resp.content.strip()
+        resp = llm.chat(messages)
+        content = resp.message.content.strip()
 
-        # Cleanup common LLM junk
+        # Strip markdown code fences if present
         if content.startswith("```json"):
             content = content.split("```json", 1)[1].rsplit("```", 1)[0].strip()
         content = content.strip()
@@ -113,19 +113,25 @@ def parse_command(
         return data
 
     except Exception as e:
-        logger.warning("Parse failed: %s\nRaw:\n%s", e, resp.content if 'resp' in locals() else '—')
+        logger.warning("Parse failed: %s", e)
         return {"intent": "unknown", "triples": []}
 
-def natural_response(llm: ChatGroq, question: str, db_text: str) -> str:
-    p = ChatPromptTemplate.from_messages([
-        SystemMessage(content=SYNTHESIS_PROMPT),
-        HumanMessage(content=f"User: {question}\n\nDatabase result:\n{db_text}")
-    ])
+
+def natural_response(llm: Groq, question: str, db_text: str) -> str:
+    """
+    Synthesize a friendly natural-language reply from the raw DB result.
+    """
+    messages: List[ChatMessage] = [
+        ChatMessage(role=MessageRole.SYSTEM, content=SYNTHESIS_PROMPT),
+        ChatMessage(
+            role=MessageRole.USER,
+            content=f"User: {question}\n\nDatabase result:\n{db_text}"
+        ),
+    ]
 
     try:
-        chain = p | llm
-        resp = chain.invoke({})
-        return resp.content.strip()
+        resp = llm.chat(messages)
+        return resp.message.content.strip()
     except Exception as e:
         logger.error("Synthesis failed: %s", e)
         return "Something went wrong while preparing the answer."

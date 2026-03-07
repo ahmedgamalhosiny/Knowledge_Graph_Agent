@@ -1,7 +1,9 @@
 import logging
-from typing import List, Any
+from typing import List
 from dotenv import load_dotenv
-from langchain_core.messages import HumanMessage, AIMessage
+
+from llama_index.core.llms import ChatMessage, MessageRole
+
 from db import connect_to_neo4j, execute
 from llm import create_llm, parse_command, natural_response
 
@@ -18,24 +20,25 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("neo4j").setLevel(logging.WARNING)
 logging.getLogger("neo4j.notifications").setLevel(logging.WARNING)
 
+
 def main():
     load_dotenv()
-    
+
     print("\n" + "═"*65)
-    print("  Knowledge Graph Chatbot")
+    print("  Knowledge Graph Chatbot  (powered by LlamaIndex)")
     print("═"*65 + "\n")
 
-    llm = create_llm()
-    graph = connect_to_neo4j()
+    llm    = create_llm()
+    driver = connect_to_neo4j()
 
-    if not graph:
+    if not driver:
         print("Cannot start without database connection.")
         return
 
-    print("Ready! You can tell facts or ask questions.\n")
-    print("\nType exit / quit to stop.\n")
+    print("Ready! You can tell facts or ask questions.")
+    print("Type exit / quit to stop.\n")
 
-    history: List[Any] = []
+    history: List[ChatMessage] = []
 
     while True:
         try:
@@ -45,13 +48,14 @@ def main():
                 break
 
             parsed = parse_command(llm, inp, history)
-            raw_db = execute(graph, parsed, inp)
+            raw_db = execute(driver, parsed, inp)
             answer = natural_response(llm, inp, raw_db)
 
             print(f"Bot: {answer}\n")
 
-            history.append(HumanMessage(content=inp))
-            history.append(AIMessage(content=answer))
+            # Keep rolling window of last 10 messages (5 turns)
+            history.append(ChatMessage(role=MessageRole.USER,      content=inp))
+            history.append(ChatMessage(role=MessageRole.ASSISTANT,  content=answer))
             if len(history) > 10:
                 history = history[-10:]
 
@@ -60,6 +64,7 @@ def main():
             break
         except Exception as e:
             print(f"Error: {e}\n")
+
 
 if __name__ == "__main__":
     main()
