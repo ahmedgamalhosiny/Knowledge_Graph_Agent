@@ -24,6 +24,19 @@ Classify the user's input into one of the following categories:
 Output ONLY the category name.
 """.strip()
 
+
+# --- CHITCHAT PROMPT ---
+chitchat_prompt = """
+You are a friendly assistant. The user is engaging in small talk.
+Respond warmly and briefly.
+""".strip()
+
+# --- OUT OF SCOPE PROMPT ---
+out_of_scope_prompt = """
+The user has asked something outside of your main knowledge graph capabilities.
+Politely explain that you specialize in managing a knowledge graph of facts and cannot help with this specific request.
+""".strip()
+
 # --- TRIPLE GENERATOR PROMPT ---
 generator_prompt = """
 **ROLE**
@@ -55,17 +68,7 @@ Output ONLY valid JSON:
 }
 """.strip()
 
-# --- CHITCHAT PROMPT ---
-chitchat_prompt = """
-You are a friendly assistant. The user is engaging in small talk.
-Respond warmly and briefly.
-""".strip()
 
-# --- OUT OF SCOPE PROMPT ---
-out_of_scope_prompt = """
-The user has asked something outside of your main knowledge graph capabilities.
-Politely explain that you specialize in managing a knowledge graph of facts and cannot help with this specific request.
-""".strip()
 
 # --- RESPONDER PROMPT ---
 responder_prompt = """
