@@ -1,33 +1,9 @@
-import os
 import re
 import logging
-from typing import Dict, List, Optional
-
-from neo4j import GraphDatabase, Driver
+from typing import Dict, List
+from neo4j import Driver
 
 logger = logging.getLogger(__name__)
-
-
-def connect_to_neo4j() -> Optional[Driver]:
-    uri      = os.getenv("NEO4J_URI")
-    username = os.getenv("NEO4J_USERNAME", "neo4j")
-    password = os.getenv("NEO4J_PASSWORD")
-
-    if not uri or not password:
-        logger.error("Missing NEO4J_URI or NEO4J_PASSWORD in .env")
-        return None
-
-    try:
-        driver = GraphDatabase.driver(uri, auth=(username, password))
-        # connection test
-        with driver.session() as session:
-            session.run("RETURN 1")
-        logger.info("Connected to Neo4j successfully")
-        return driver
-    except Exception as e:
-        logger.error("Neo4j connection failed: %s", e, exc_info=True)
-        return None
-
 
 def normalize_predicate(raw: str) -> str:
     """Make predicate safe for Neo4j relationship type."""
@@ -37,7 +13,6 @@ def normalize_predicate(raw: str) -> str:
     s = re.sub(r'\s+', '_', s.strip())
     s = re.sub(r'_+', '_', s)
     return s or "RELATED_TO"
-
 
 def db_add_or_edit(driver: Driver, triple: Dict, original_text: str) -> str:
     subj     = triple.get("subject", "").strip()
@@ -67,7 +42,6 @@ def db_add_or_edit(driver: Driver, triple: Dict, original_text: str) -> str:
     except Exception as e:
         logger.error("Add/Edit error: %s", e)
         return f"Failed to store {subj} {pred} {obj}"
-
 
 def db_inquire(driver: Driver, triple: Dict) -> List[str]:
     entity = (triple.get("subject") or triple.get("object") or "").strip()
@@ -115,7 +89,6 @@ def db_inquire(driver: Driver, triple: Dict) -> List[str]:
         logger.error("Inquire failed: %s", e)
         return ["Search failed — try again later."]
 
-
 def db_delete(driver: Driver, triple: Dict) -> str:
     subj = triple.get("subject", "").strip()
     obj  = triple.get("object", "").strip()
@@ -143,36 +116,3 @@ def db_delete(driver: Driver, triple: Dict) -> str:
     except Exception as e:
         logger.error("Delete failed: %s", e)
         return "Delete operation failed."
-
-
-def execute(driver: Driver, parsed: Dict, user_text: str) -> str:
-    intent  = parsed.get("intent", "unknown")
-    triples = parsed.get("triples", [])
-
-    if intent == "unknown":
-        return "Sorry, I didn't understand what you want to do."
-
-    if not triples:
-        return "I understood the intent but couldn't extract clear facts."
-
-    lines = []
-
-    for t in triples:
-        if intent in ("add", "edit"):
-            msg = db_add_or_edit(driver, t, user_text)
-        elif intent == "inquire":
-            facts = db_inquire(driver, t)
-            lines.extend(facts)
-            continue
-        elif intent == "delete":
-            msg = db_delete(driver, t)
-        else:
-            msg = ""
-
-        if msg:
-            lines.append(msg)
-
-    if intent == "inquire":
-        return "\n".join(lines) if lines else f"Nothing found about {triples[0].get('subject','?')[:20]}."
-
-    return "\n".join(lines) or "Operation finished."

@@ -19,7 +19,8 @@ Run:  python seed.py
 import os
 import logging
 from dotenv import load_dotenv
-from db import connect_to_neo4j, normalize_predicate
+from database.connection import connect_to_neo4j
+from database.operations import normalize_predicate
 
 logging.basicConfig(
     level=logging.INFO,
@@ -326,6 +327,125 @@ TRIPLES = [
     ("Sigmund Freud", "BORN_IN", "Freiberg, Moravia"),
     ("Carl Jung", "DEVELOPED", "Analytical Psychology"),
     ("Carl Jung", "STUDIED_UNDER", "Sigmund Freud"),
+
+    # ── Cinema & Movies ────────────────────────────────────────────────────
+    ("The Godfather", "DIRECTED_BY", "Francis Ford Coppola"),
+    ("The Godfather", "RELEASED_IN", "1972"),
+    ("Francis Ford Coppola", "BORN_IN", "Detroit, Michigan"),
+    ("The Dark Knight", "DIRECTED_BY", "Christopher Nolan"),
+    ("The Dark Knight", "FEATURES_CHARACTER", "Batman"),
+    ("Christopher Nolan", "DIRECTED", "Inception"),
+    ("Pulp Fiction", "DIRECTED_BY", "Quentin Tarantino"),
+    ("Quentin Tarantino", "BORN_IN", "Knoxville, Tennessee"),
+    ("Avatar", "DIRECTED_BY", "James Cameron"),
+    ("Avatar", "RELEASED_IN", "2009"),
+    ("Schindler's List", "DIRECTED_BY", "Steven Spielberg"),
+    ("Steven Spielberg", "DIRECTED", "Jurassic Park"),
+    ("Forrest Gump", "DIRECTED_BY", "Robert Zemeckis"),
+    ("Forrest Gump", "RELEASED_IN", "1994"),
+    ("Citizen Kane", "DIRECTED_BY", "Orson Welles"),
+    ("Citizen Kane", "RELEASED_IN", "1941"),
+
+    # ── Chemistry & Elements ───────────────────────────────────────────────
+    ("Hydrogen", "HAS_SYMBOL", "H"),
+    ("Hydrogen", "HAS_ATOMIC_NUMBER", "1"),
+    ("Oxygen", "HAS_SYMBOL", "O"),
+    ("Oxygen", "HAS_ATOMIC_NUMBER", "8"),
+    ("Gold", "HAS_SYMBOL", "Au"),
+    ("Gold", "HAS_ATOMIC_NUMBER", "79"),
+    ("Carbon", "IS_ESSENTIAL_FOR", "Life"),
+    ("Carbon", "HAS_ATOMIC_NUMBER", "6"),
+    ("Silicon", "USED_IN", "Semiconductors"),
+    ("Helium", "IS_TYPE", "Noble Gas"),
+    ("Dmitri Mendeleev", "CREATED", "Periodic Table"),
+
+    # ── Mythology & Folklore ───────────────────────────────────────────────
+    ("Zeus", "IS_KING_OF", "Greek Gods"),
+    ("Zeus", "RULES_FROM", "Mount Olympus"),
+    ("Poseidon", "IS_GOD_OF", "Sea"),
+    ("Hades", "IS_GOD_OF", "Underworld"),
+    ("Odin", "IS_KING_OF", "Norse Gods"),
+    ("Odin", "LIVES_IN", "Valhalla"),
+    ("Thor", "IS_GOD_OF", "Thunder"),
+    ("Thor", "WIELDS", "Mjolnir"),
+    ("Ra", "IS_GOD_OF", "Sun"),
+    ("Ra", "PART_OF", "Egyptian Mythology"),
+    ("Anubis", "IS_GOD_OF", "Mummification"),
+
+    # ── Music & Composers ──────────────────────────────────────────────────
+    ("Johann Sebastian Bach", "COMPOSED", "Goldberg Variations"),
+    ("Johann Sebastian Bach", "BORN_IN", "Eisenach, Germany"),
+    ("Frederic Chopin", "BORN_IN", "Zelazowa Wola, Poland"),
+    ("Frederic Chopin", "KNOWN_FOR", "Piano Music"),
+    ("Pyotr Ilyich Tchaikovsky", "COMPOSED", "The Nutcracker"),
+    ("Pyotr Ilyich Tchaikovsky", "BORN_IN", "Votkinsk, Russia"),
+    ("The Beatles", "MEMBERS_INCLUDE", "John Lennon"),
+    ("The Beatles", "MEMBERS_INCLUDE", "Paul McCartney"),
+    ("The Beatles", "MEMBERS_INCLUDE", "George Harrison"),
+    ("The Beatles", "MEMBERS_INCLUDE", "Ringo Starr"),
+    ("Freddie Mercury", "WAS_SINGER_OF", "Queen"),
+    ("Elvis Presley", "KNOWN_AS", "King of Rock and Roll"),
+
+    # ── Inventions & Inventors ─────────────────────────────────────────────
+    ("Thomas Edison", "INVENTED", "Light Bulb"),
+    ("Thomas Edison", "FOUNDED", "General Electric"),
+    ("Alexander Graham Bell", "INVENTED", "Telephone"),
+    ("Alexander Graham Bell", "BORN_IN", "Edinburgh, Scotland"),
+    ("Nikola Tesla", "DEVELOPED", "Alternating Current"),
+    ("Nikola Tesla", "BORN_IN", "Smiljan, Croatia"),
+    ("Eli Whitney", "INVENTED", "Cotton Gin"),
+    ("Johannes Gutenberg", "INVENTED", "Printing Press"),
+    ("James Watt", "IMPROVED", "Steam Engine"),
+    ("Guglielmo Marconi", "INVENTED", "Radio"),
+
+    # ── Landmarks & Architecture ───────────────────────────────────────────
+    ("Eiffel Tower", "DESIGNED_BY", "Gustave Eiffel"),
+    ("Eiffel Tower", "LOCATED_IN", "Paris, France"),
+    ("Statue of Liberty", "LOCATED_IN", "New York City"),
+    ("Statue of Liberty", "GIFT_FROM", "France"),
+    ("Great Wall of China", "BUILT_TO_PROTECT", "China"),
+    ("Colosseum", "LOCATED_IN", "Rome, Italy"),
+    ("Taj Mahal", "BUILT_BY", "Shah Jahan"),
+    ("Taj Mahal", "LOCATED_IN", "Agra, India"),
+    ("Burj Khalifa", "IS_TALLEST_BUILDING_IN", "World"),
+    ("Burj Khalifa", "LOCATED_IN", "Dubai, UAE"),
+    ("Sydney Opera House", "LOCATED_IN", "Sydney, Australia"),
+
+    # ── Mythology & Folklore (Extra) ───────────────────────────────────────
+    ("Odin", "HAS_SON", "Thor"),
+    ("Odin", "HAS_SON", "Baldur"),
+    ("Frigg", "IS_WIFE_OF", "Odin"),
+    ("Valkyrie", "CHOOSES_WHO_DIE_IN", "Battle"),
+    ("Fenrir", "IS_CHILD_OF", "Loki"),
+    ("Loki", "IS_GOD_OF", "Mischief"),
+    ("Freya", "IS_GODDESS_OF", "Love"),
+    ("Sleipnir", "IS_HORSE_OF", "Odin"),
+
+    # ── Animals & Biology ──────────────────────────────────────────────────
+    ("Cheetah", "IS_FASTEST_LAND_ANIMAL", "Earth"),
+    ("Blue Whale", "IS_LARGEST_ANIMAL", "Earth"),
+    ("Ostrich", "IS_LARGEST_BIRD", "Earth"),
+    ("Colossal Squid", "HAS_LARGEST_EYE", "Animal Kingdom"),
+    ("Honey Badger", "IS_KNOWN_FOR", "Bravery"),
+    ("Platypus", "LAYS", "Eggs"),
+    ("Koala", "EATS", "Eucalyptus"),
+    ("Great White Shark", "LIVES_IN", "Oceans"),
+
+    # ── Software & Companies ───────────────────────────────────────────────
+    ("Android", "DEVELOPED_BY", "Google"),
+    ("Discord", "USED_FOR", "Community Chat"),
+    ("Slack", "USED_FOR", "Workplace Communication"),
+    ("Adobe", "CREATED", "Photoshop"),
+    ("Autodesk", "CREATED", "AutoCAD"),
+    ("Intel", "MANUFACTURES", "Microprocessors"),
+    ("Nvidia", "MANUFACTURES", "GPUs"),
+
+    # ── Mathematics ────────────────────────────────────────────────────────
+    ("Pythagoras", "DEVELOPED", "Pythagorean Theorem"),
+    ("Archimedes", "DISCOVERED", "Principle of Buoyancy"),
+    ("Euclid", "KNOWN_AS", "Father of Geometry"),
+    ("Fibonacci", "CREATED", "Fibonacci Sequence"),
+    ("Euler", "DISCOVERED", "Euler's Number e"),
 ]
 
 
@@ -337,21 +457,22 @@ def seed(graph):
     logger.info("Starting seed — %d triples to insert...", len(TRIPLES))
     success, failed = 0, 0
 
-    for subj, pred_raw, obj in TRIPLES:
-        pred = normalize_predicate(pred_raw)
-        cypher = f"""
-        MERGE (s:Entity {{name: $subj}})
-        MERGE (o:Entity {{name: $obj}})
-        MERGE (s)-[r:{pred}]->(o)
-        SET r.seeded = true, r.updated = datetime()
-        RETURN 1
-        """
-        try:
-            graph.query(cypher, {"subj": subj, "obj": obj})
-            success += 1
-        except Exception as e:
-            logger.error("Failed: %s -[%s]-> %s | %s", subj, pred, obj, e)
-            failed += 1
+    with graph.session() as session:
+        for subj, pred_raw, obj in TRIPLES:
+            pred = normalize_predicate(pred_raw)
+            cypher = f"""
+            MERGE (s:Entity {{name: $subj}})
+            MERGE (o:Entity {{name: $obj}})
+            MERGE (s)-[r:{pred}]->(o)
+            SET r.seeded = true, r.updated = datetime()
+            RETURN 1
+            """
+            try:
+                session.run(cypher, subj=subj, obj=obj)
+                success += 1
+            except Exception as e:
+                logger.error("Failed: %s -[%s]-> %s | %s", subj, pred, obj, e)
+                failed += 1
 
     logger.info("Done! ✅ %d inserted, ❌ %d failed.", success, failed)
     print(f"\n✅ Seeding complete: {success} triples inserted, {failed} failed.\n")
@@ -359,9 +480,10 @@ def seed(graph):
 
 def print_stats(graph):
     """Print a quick summary of what's now in the DB."""
-    node_count = graph.query("MATCH (n:Entity) RETURN count(n) AS cnt")[0]["cnt"]
-    rel_count  = graph.query("MATCH ()-[r]->() RETURN count(r) AS cnt")[0]["cnt"]
-    rel_types  = graph.query("MATCH ()-[r]->() RETURN DISTINCT type(r) AS t ORDER BY t")
+    with graph.session() as session:
+        node_count = session.run("MATCH (n:Entity) RETURN count(n) AS cnt").single()["cnt"]
+        rel_count  = session.run("MATCH ()-[r]->() RETURN count(r) AS cnt").single()["cnt"]
+        rel_types  = list(session.run("MATCH ()-[r]->() RETURN DISTINCT type(r) AS t ORDER BY t"))
 
     print(f"📊 Database Stats:")
     print(f"   Nodes     : {node_count}")
