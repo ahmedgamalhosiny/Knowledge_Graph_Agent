@@ -26,6 +26,11 @@ A natural language chatbot that extracts facts from conversations and stores the
 - **agent/**: LlamaIndex-powered nodes and state management.
 - **main.py**: Chatbot REPL loop with conversation history.
 
+## Architecture Diagram
+The system follows a modular state-machine design:
+
+![Architecture Diagram](![alt text](images/graph.PNG))
+
 ## Running
 ```bash
 python main.py
