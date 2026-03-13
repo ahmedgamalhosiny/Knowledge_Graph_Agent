@@ -1,20 +1,3 @@
-"""
-seed.py — Populate the Neo4j knowledge graph with rich, diverse data.
-
-Domains covered:
-  • Science & Physics
-  • Space & Astronomy
-  • Biology & Medicine
-  • History & Civilizations
-  • Technology & Computing
-  • Geography & Countries
-  • Arts & Literature
-  • Sports & Athletes
-  • Economics & Companies
-  • Philosophy & Thinkers
-
-Run:  python seed.py
-"""
 
 import os
 import logging
@@ -29,12 +12,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# DATA  —  list of (subject, predicate, object) tuples
-# ---------------------------------------------------------------------------
+
 TRIPLES = [
 
-    # ── Science & Physics ──────────────────────────────────────────────────
+    # Science & Physics
     ("Albert Einstein", "DEVELOPED", "Theory of Relativity"),
     ("Albert Einstein", "BORN_IN", "Ulm, Germany"),
     ("Albert Einstein", "WORKED_AT", "Princeton University"),
@@ -67,7 +48,7 @@ TRIPLES = [
     ("CERN", "LOCATED_IN", "Geneva, Switzerland"),
     ("CERN", "OPERATES", "Large Hadron Collider"),
 
-    # ── Space & Astronomy ──────────────────────────────────────────────────
+    # Space & Astronomy
     ("Solar System", "CONTAINS", "Sun"),
     ("Solar System", "CONTAINS", "Mercury"),
     ("Solar System", "CONTAINS", "Venus"),
@@ -99,7 +80,7 @@ TRIPLES = [
     ("International Space Station", "ORBITS", "Earth"),
     ("International Space Station", "INHABITED_SINCE", "2000"),
 
-    # ── Biology & Medicine ─────────────────────────────────────────────────
+    # Biology & Medicine
     ("DNA", "STANDS_FOR", "Deoxyribonucleic Acid"),
     ("DNA", "DISCOVERED_BY", "Francis Crick and James Watson"),
     ("DNA", "DISCOVERED_IN", "1953"),
@@ -127,7 +108,7 @@ TRIPLES = [
     ("Insulin", "REGULATES", "Blood Sugar"),
     ("Insulin", "PRODUCED_BY", "Pancreas"),
 
-    # ── History & Civilizations ────────────────────────────────────────────
+    # History & Civilizations
     ("Ancient Egypt", "BUILT", "Pyramids"),
     ("Ancient Egypt", "LOCATED_IN", "North Africa"),
     ("Ancient Egypt", "HAD_RULER", "Pharaoh"),
@@ -160,7 +141,7 @@ TRIPLES = [
     ("Mongol Empire", "FOUNDED_BY", "Genghis Khan"),
     ("Mongol Empire", "WAS_LARGEST_CONTIGUOUS", "Land Empire"),
 
-    # ── Technology & Computing ─────────────────────────────────────────────
+    # Technology & Computing
     ("Internet", "INVENTED_BY", "Tim Berners-Lee"),
     ("World Wide Web", "INVENTED_BY", "Tim Berners-Lee"),
     ("Tim Berners-Lee", "BORN_IN", "London, England"),
@@ -197,7 +178,7 @@ TRIPLES = [
     ("Bitcoin", "CREATED_BY", "Satoshi Nakamoto"),
     ("Bitcoin", "CREATED_IN", "2009"),
 
-    # ── Geography & Countries ──────────────────────────────────────────────
+    # Geography & Countries
     ("Egypt", "CAPITAL", "Cairo"),
     ("Egypt", "LOCATED_IN", "North Africa"),
     ("Egypt", "HAS_RIVER", "Nile"),
@@ -230,7 +211,7 @@ TRIPLES = [
     ("Mariana Trench", "IS_DEEPEST", "Point in Ocean"),
     ("Mariana Trench", "LOCATED_IN", "Pacific Ocean"),
 
-    # ── Arts & Literature ──────────────────────────────────────────────────
+    # Arts & Literature
     ("William Shakespeare", "WROTE", "Hamlet"),
     ("William Shakespeare", "WROTE", "Romeo and Juliet"),
     ("William Shakespeare", "WROTE", "Macbeth"),
@@ -256,7 +237,7 @@ TRIPLES = [
     ("Pablo Picasso", "FOUNDED", "Cubism"),
     ("Pablo Picasso", "PAINTED", "Guernica"),
 
-    # ── Sports & Athletes ──────────────────────────────────────────────────
+    # Sports & Athletes
     ("FIFA World Cup", "HELD_EVERY", "4 Years"),
     ("Brazil", "WON_FIFA_WORLD_CUP_TIMES", "5"),
     ("Lionel Messi", "PLAYS_FOR", "Inter Miami"),
@@ -278,7 +259,7 @@ TRIPLES = [
     ("Serena Williams", "BORN_IN", "Saginaw, Michigan"),
     ("Serena Williams", "WON_GRAND_SLAMS", "23"),
 
-    # ── Economics & Companies ──────────────────────────────────────────────
+    # Economics & Companies
     ("Amazon", "FOUNDED_BY", "Jeff Bezos"),
     ("Amazon", "FOUNDED_IN", "1994"),
     ("Amazon", "HEADQUARTERED_IN", "Seattle, Washington"),
@@ -300,7 +281,7 @@ TRIPLES = [
     ("Goldman Sachs", "IS_TYPE", "Investment Bank"),
     ("Goldman Sachs", "HEADQUARTERED_IN", "New York City"),
 
-    # ── Philosophy & Thinkers ──────────────────────────────────────────────
+    # Philosophy & Thinkers
     ("Socrates", "TAUGHT", "Plato"),
     ("Socrates", "BORN_IN", "Athens, Greece"),
     ("Socrates", "DEVELOPED", "Socratic Method"),
@@ -328,7 +309,7 @@ TRIPLES = [
     ("Carl Jung", "DEVELOPED", "Analytical Psychology"),
     ("Carl Jung", "STUDIED_UNDER", "Sigmund Freud"),
 
-    # ── Cinema & Movies ────────────────────────────────────────────────────
+    # Cinema & Movies
     ("The Godfather", "DIRECTED_BY", "Francis Ford Coppola"),
     ("The Godfather", "RELEASED_IN", "1972"),
     ("Francis Ford Coppola", "BORN_IN", "Detroit, Michigan"),
@@ -346,7 +327,7 @@ TRIPLES = [
     ("Citizen Kane", "DIRECTED_BY", "Orson Welles"),
     ("Citizen Kane", "RELEASED_IN", "1941"),
 
-    # ── Chemistry & Elements ───────────────────────────────────────────────
+    # Chemistry & Elements
     ("Hydrogen", "HAS_SYMBOL", "H"),
     ("Hydrogen", "HAS_ATOMIC_NUMBER", "1"),
     ("Oxygen", "HAS_SYMBOL", "O"),
@@ -359,7 +340,7 @@ TRIPLES = [
     ("Helium", "IS_TYPE", "Noble Gas"),
     ("Dmitri Mendeleev", "CREATED", "Periodic Table"),
 
-    # ── Mythology & Folklore ───────────────────────────────────────────────
+    # Mythology & Folklore
     ("Zeus", "IS_KING_OF", "Greek Gods"),
     ("Zeus", "RULES_FROM", "Mount Olympus"),
     ("Poseidon", "IS_GOD_OF", "Sea"),
@@ -372,7 +353,7 @@ TRIPLES = [
     ("Ra", "PART_OF", "Egyptian Mythology"),
     ("Anubis", "IS_GOD_OF", "Mummification"),
 
-    # ── Music & Composers ──────────────────────────────────────────────────
+    # Music & Composers
     ("Johann Sebastian Bach", "COMPOSED", "Goldberg Variations"),
     ("Johann Sebastian Bach", "BORN_IN", "Eisenach, Germany"),
     ("Frederic Chopin", "BORN_IN", "Zelazowa Wola, Poland"),
@@ -386,7 +367,7 @@ TRIPLES = [
     ("Freddie Mercury", "WAS_SINGER_OF", "Queen"),
     ("Elvis Presley", "KNOWN_AS", "King of Rock and Roll"),
 
-    # ── Inventions & Inventors ─────────────────────────────────────────────
+    # Inventions & Inventors
     ("Thomas Edison", "INVENTED", "Light Bulb"),
     ("Thomas Edison", "FOUNDED", "General Electric"),
     ("Alexander Graham Bell", "INVENTED", "Telephone"),
@@ -398,7 +379,7 @@ TRIPLES = [
     ("James Watt", "IMPROVED", "Steam Engine"),
     ("Guglielmo Marconi", "INVENTED", "Radio"),
 
-    # ── Landmarks & Architecture ───────────────────────────────────────────
+    # Landmarks & Architecture
     ("Eiffel Tower", "DESIGNED_BY", "Gustave Eiffel"),
     ("Eiffel Tower", "LOCATED_IN", "Paris, France"),
     ("Statue of Liberty", "LOCATED_IN", "New York City"),
@@ -411,7 +392,7 @@ TRIPLES = [
     ("Burj Khalifa", "LOCATED_IN", "Dubai, UAE"),
     ("Sydney Opera House", "LOCATED_IN", "Sydney, Australia"),
 
-    # ── Mythology & Folklore (Extra) ───────────────────────────────────────
+    # Mythology & Folklore (Extra)
     ("Odin", "HAS_SON", "Thor"),
     ("Odin", "HAS_SON", "Baldur"),
     ("Frigg", "IS_WIFE_OF", "Odin"),
@@ -421,7 +402,7 @@ TRIPLES = [
     ("Freya", "IS_GODDESS_OF", "Love"),
     ("Sleipnir", "IS_HORSE_OF", "Odin"),
 
-    # ── Animals & Biology ──────────────────────────────────────────────────
+    # Animals & Biology
     ("Cheetah", "IS_FASTEST_LAND_ANIMAL", "Earth"),
     ("Blue Whale", "IS_LARGEST_ANIMAL", "Earth"),
     ("Ostrich", "IS_LARGEST_BIRD", "Earth"),
@@ -431,7 +412,7 @@ TRIPLES = [
     ("Koala", "EATS", "Eucalyptus"),
     ("Great White Shark", "LIVES_IN", "Oceans"),
 
-    # ── Software & Companies ───────────────────────────────────────────────
+    # Software & Companies
     ("Android", "DEVELOPED_BY", "Google"),
     ("Discord", "USED_FOR", "Community Chat"),
     ("Slack", "USED_FOR", "Workplace Communication"),
@@ -440,7 +421,7 @@ TRIPLES = [
     ("Intel", "MANUFACTURES", "Microprocessors"),
     ("Nvidia", "MANUFACTURES", "GPUs"),
 
-    # ── Mathematics ────────────────────────────────────────────────────────
+    # Mathematics
     ("Pythagoras", "DEVELOPED", "Pythagorean Theorem"),
     ("Archimedes", "DISCOVERED", "Principle of Buoyancy"),
     ("Euclid", "KNOWN_AS", "Father of Geometry"),
@@ -449,9 +430,6 @@ TRIPLES = [
 ]
 
 
-# ---------------------------------------------------------------------------
-# SEEDING LOGIC
-# ---------------------------------------------------------------------------
 
 def seed(graph):
     logger.info("Starting seed — %d triples to insert...", len(TRIPLES))
@@ -474,18 +452,18 @@ def seed(graph):
                 logger.error("Failed: %s -[%s]-> %s | %s", subj, pred, obj, e)
                 failed += 1
 
-    logger.info("Done! ✅ %d inserted, ❌ %d failed.", success, failed)
-    print(f"\n✅ Seeding complete: {success} triples inserted, {failed} failed.\n")
+    logger.info("Done! %d inserted,  %d failed.", success, failed)
+    print(f"\n Seeding complete: {success} triples inserted, {failed} failed.\n")
 
 
 def print_stats(graph):
-    """Print a quick summary of what's now in the DB."""
+    # Summary of DB
     with graph.session() as session:
         node_count = session.run("MATCH (n:Entity) RETURN count(n) AS cnt").single()["cnt"]
         rel_count  = session.run("MATCH ()-[r]->() RETURN count(r) AS cnt").single()["cnt"]
         rel_types  = list(session.run("MATCH ()-[r]->() RETURN DISTINCT type(r) AS t ORDER BY t"))
 
-    print(f"📊 Database Stats:")
+    print(f"   Database Stats:")
     print(f"   Nodes     : {node_count}")
     print(f"   Relations : {rel_count}")
     print(f"   Rel Types : {len(rel_types)}")
@@ -498,7 +476,7 @@ if __name__ == "__main__":
     load_dotenv()
     graph = connect_to_neo4j()
     if not graph:
-        print("❌ Could not connect to Neo4j. Check your .env file.")
+        print(" Could not connect to Neo4j. Check your .env file.")
     else:
         seed(graph)
         print_stats(graph)

@@ -21,8 +21,6 @@ def create_graph():
         intent = state["intent"]
         if intent == "chitchat":
             return "chitchat"
-        elif intent == "out_of_scope":
-            return "out_of_scope"
         elif intent == "inquiry":
             return "inquiry"
         else:

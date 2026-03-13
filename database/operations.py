@@ -6,7 +6,7 @@ from neo4j import Driver
 logger = logging.getLogger(__name__)
 
 def normalize_predicate(raw: str) -> str:
-    """Make predicate safe for Neo4j relationship type."""
+    # Normalize predicate for Neo4j
     if not raw:
         return "RELATED_TO"
     s = re.sub(r'[^A-Z0-9_ ]', '', raw.upper())
@@ -41,6 +41,7 @@ def db_add_or_edit(driver: Driver, triple: Dict, original_text: str) -> str:
         return f"Failed to store {subj} {pred} {obj}"
 
 def db_inquire(driver: Driver, triple: Dict) -> List[str]:
+    # Search for entity relations
     entity = (triple.get("subject") or triple.get("object") or "").strip()
     if not entity:
         return []
@@ -108,7 +109,7 @@ def db_delete(driver: Driver, triple: Dict) -> str:
         return (
             f"Deleted: {subj} {pred} {obj}"
             if cnt > 0
-            else f"Did not find {subj} {pred} {obj} to delete."
+            else f"Not found: {subj} {pred} {obj}"
         )
     except Exception as e:
         logger.error("Delete failed: %s", e)
