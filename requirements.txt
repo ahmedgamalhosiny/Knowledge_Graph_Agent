@@ -40,7 +40,6 @@ jsonpointer==3.0.0
 # Core
 llama-index-core
 llama-index-llms-groq
-
 # Database
 neo4j
 

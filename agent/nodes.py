@@ -5,7 +5,13 @@ from typing import Dict, Any, List
 from llama_index.llms.groq import Groq
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from agent.state import AgentState
-from agent.prompts import *
+from agent.prompts import (
+    classifier_prompt,
+    inquiry_prompt,
+    chitchat_prompt,
+    out_of_scope_prompt,
+    responder_prompt,
+)
 from database.connection import connect_to_neo4j
 from database.operations import db_add_or_edit, db_inquire, db_delete
 
@@ -27,15 +33,45 @@ def _convert_history(history: List[Dict[str, str]]) -> List[ChatMessage]:
     return messages
 
 
+def _get_entities_heuristic(text: str) -> List[str]:
+    """Simple heuristic to find potential entities (Capitalized words)."""
+    import re
+    # Match words starting with capital letters
+    words = re.findall(r'\b[A-Z][a-z]+\b', text)
+    # Also include any word > 4 chars just to be safe for lowercase inputs
+    long_words = [w for w in re.findall(r'\b\w{5,}\b', text) if w not in words]
+    return list(set(words + long_words))
+
 def intent_classifier_node(state: AgentState) -> Dict[str, Any]:
     llm = get_llm()
-    # For classification, we usually just want the current input, 
-    # but let's include context just in case.
+    user_input = state["user_input"]
+    
+    # 1. Search DB for context
+    db_context = "No relevant context found."
+    potential_entities = _get_entities_heuristic(user_input)
+    
+    if potential_entities:
+        driver = connect_to_neo4j()
+        if driver:
+            try:
+                context_results = []
+                for ent in potential_entities:
+                    res = db_inquire(driver, {"subject": ent})
+                    if res: context_results.extend(res)
+                if context_results:
+                    db_context = "\n".join(context_results)
+            finally:
+                driver.close()
+
+    # 2. Format Prompt with Context
+    prompt = classifier_prompt.format(db_context=db_context)
+    
     history_messages = _convert_history(state.get("history", []))
     messages = history_messages + [
-        ChatMessage(role=MessageRole.SYSTEM, content=classifier_prompt),
-        ChatMessage(role=MessageRole.USER, content=state["user_input"]),
+        ChatMessage(role=MessageRole.SYSTEM, content=prompt),
+        ChatMessage(role=MessageRole.USER, content=user_input),
     ]
+    
     response = llm.chat(messages)
     intent = response.message.content.strip().lower()
     return {"intent": intent}
@@ -63,10 +99,10 @@ def out_of_scope_node(state: AgentState) -> Dict[str, Any]:
     return {"response": response.message.content}
 
 
-def generator_node(state: AgentState) -> Dict[str, Any]:
+def inquiry_node(state: AgentState) -> Dict[str, Any]:
     llm = get_llm()
     messages = [
-        ChatMessage(role=MessageRole.SYSTEM, content=generator_prompt),
+        ChatMessage(role=MessageRole.SYSTEM, content=inquiry_prompt),
         ChatMessage(role=MessageRole.USER, content=state["user_input"]),
     ]
     response = llm.chat(messages)
@@ -83,7 +119,7 @@ def generator_node(state: AgentState) -> Dict[str, Any]:
             "intent": data.get("intent", "add")
         }
     except Exception as e:
-        logger.error(f"Failed to parse generator output: {e}")
+        logger.error(f"Failed to parse inquiry output: {e}")
         return {"triples": [], "intent": "unknown"}
 
 
@@ -102,8 +138,8 @@ def executer_node(state: AgentState) -> Dict[str, Any]:
 
     results = []
     try:
-        # If intent is inquire, we primarily care about the entity (subject)
-        if intent == "inquire":
+        # If intent is read, we primarily care about the entity (subject)
+        if intent == "read":
             entities = set()
             for t in triples:
                 if t.get("subject"): entities.add(t["subject"])

@@ -9,7 +9,7 @@ def create_graph():
     workflow.add_node("intent_classifier", intent_classifier_node)
     workflow.add_node("chitchat", chitchat_node)
     workflow.add_node("out_of_scope", out_of_scope_node)
-    workflow.add_node("generator", generator_node)
+    workflow.add_node("inquiry", inquiry_node)
     workflow.add_node("executer", executer_node)
     workflow.add_node("responder", responder_node)
 
@@ -23,8 +23,8 @@ def create_graph():
             return "chitchat"
         elif intent == "out_of_scope":
             return "out_of_scope"
-        elif intent in ("generator", "inquire"):
-            return "generator"
+        elif intent == "inquiry":
+            return "inquiry"
         else:
             return "out_of_scope"
 
@@ -34,12 +34,12 @@ def create_graph():
         {
             "chitchat": "chitchat",
             "out_of_scope": "out_of_scope",
-            "generator": "generator"
+            "inquiry": "inquiry"
         }
     )
 
     # Add Normal Edges
-    workflow.add_edge("generator", "executer")
+    workflow.add_edge("inquiry", "executer")
     workflow.add_edge("executer", "responder")
 
     # Connect to END

@@ -7,7 +7,7 @@ class AgentState(TypedDict):
     """
     user_input: str
     intent: str
-    triples: List[Dict[str, Any]]
+    triples: List[Dict[str, Any]] # entity ---> value
     db_results: str
     response: str
     history: Annotated[List[Dict[str, str]], operator.add]

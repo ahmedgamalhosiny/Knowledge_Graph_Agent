@@ -24,9 +24,6 @@ def db_add_or_edit(driver: Driver, triple: Dict, original_text: str) -> str:
         return ""
 
     cypher = f"""
-    OPTIONAL MATCH (s_old:Entity {{name: $subj}})-[old:{pred}]->()
-    DELETE old
-    WITH 1 AS dummy
     MERGE (s:Entity {{name: $subj}})
     MERGE (o:Entity {{name: $obj}})
     MERGE (s)-[r:{pred}]->(o)
