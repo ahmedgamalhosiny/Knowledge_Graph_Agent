@@ -29,7 +29,7 @@ A natural language chatbot that extracts facts from conversations and stores the
 ## Architecture Diagram
 The system follows a modular state-machine design:
 
-![Architecture Diagram](![alt text](images/graph.PNG))
+![alt text](images/graph.PNG)
 
 ## Running
 ```bash
