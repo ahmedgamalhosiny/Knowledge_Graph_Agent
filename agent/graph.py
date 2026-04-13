@@ -1,48 +1,91 @@
-from langgraph.graph import StateGraph, END
+from typing import Any, Dict, List, Optional
+from llama_index.core.workflow import (
+    Workflow,
+    Event,
+    StartEvent,
+    StopEvent,
+    step,
+    Context
+)
 from agent.state import AgentState
-from agent.nodes import *
+from agent.nodes import (
+    intent_classifier_node,
+    chitchat_node,
+    out_of_scope_node,
+    inquiry_node,
+    executer_node,
+    responder_node
+)
+
+# Events
+class IntentEvent(Event):
+    intent: str
+    user_input: str
+
+class InquiryEvent(Event):
+    user_input: str
+
+class ExecuterEvent(Event):
+    user_input: str
+    db_results: str
+
+class KGWorkflow(Workflow):
+    @step
+    async def classify_intent(self, ctx: Context, ev: StartEvent) -> IntentEvent:
+        # Initialize state in context if needed
+        state = await ctx.store.get("state", default={
+            "user_input": ev.user_input,
+            "history": ev.history,
+            "intent": None,
+            "triples": [],
+            "db_results": "",
+            "response": ""
+        })
+        
+        # update user input for current turn
+        state["user_input"] = ev.user_input
+        
+        result = intent_classifier_node(state)
+        state.update(result)
+        await ctx.store.set("state", state)
+        
+        return IntentEvent(intent=state["intent"], user_input=state["user_input"])
+
+    @step
+    async def handle_intent(self, ctx: Context, ev: IntentEvent) -> InquiryEvent | StopEvent:
+        state = await ctx.store.get("state")
+        
+        if ev.intent == "chitchat":
+            result = chitchat_node(state)
+            return StopEvent(result=result["response"])
+        elif ev.intent == "inquiry":
+            return InquiryEvent(user_input=ev.user_input)
+        else:
+            result = out_of_scope_node(state)
+            return StopEvent(result=result["response"])
+
+    @step
+    async def inquiry(self, ctx: Context, ev: InquiryEvent) -> ExecuterEvent:
+        state = await ctx.store.get("state")
+        result = inquiry_node(state)
+        state.update(result)
+        await ctx.store.set("state", state)
+        return ExecuterEvent(user_input=ev.user_input, db_results="")
+
+    @step
+    async def execute_db(self, ctx: Context, ev: ExecuterEvent) -> ExecuterEvent:
+        state = await ctx.store.get("state")
+        result = executer_node(state)
+        state.update(result)
+        await ctx.store.set("state", state)
+        return ExecuterEvent(user_input=ev.user_input, db_results=state["db_results"])
+
+    @step
+    async def respond(self, ctx: Context, ev: ExecuterEvent) -> StopEvent:
+        state = await ctx.store.get("state")
+        result = responder_node(state)
+        return StopEvent(result=result["response"])
 
 def create_graph():
-    workflow = StateGraph(AgentState)
-
-    # Add Nodes
-    workflow.add_node("intent_classifier", intent_classifier_node)
-    workflow.add_node("chitchat", chitchat_node)
-    workflow.add_node("out_of_scope", out_of_scope_node)
-    workflow.add_node("inquiry", inquiry_node)
-    workflow.add_node("executer", executer_node)
-    workflow.add_node("responder", responder_node)
-
-    # Set Entry Point
-    workflow.set_entry_point("intent_classifier")
-
-    # Add Conditional Edges from Intent Classifier
-    def route_intent(state: AgentState):
-        intent = state["intent"]
-        if intent == "chitchat":
-            return "chitchat"
-        elif intent == "inquiry":
-            return "inquiry"
-        else:
-            return "out_of_scope"
-
-    workflow.add_conditional_edges(
-        "intent_classifier",
-        route_intent,
-        {
-            "chitchat": "chitchat",
-            "out_of_scope": "out_of_scope",
-            "inquiry": "inquiry"
-        }
-    )
-
-    # Add Normal Edges
-    workflow.add_edge("inquiry", "executer")
-    workflow.add_edge("executer", "responder")
-
-    # Connect to END
-    workflow.add_edge("chitchat", END)
-    workflow.add_edge("out_of_scope", END)
-    workflow.add_edge("responder", END)
-
-    return workflow.compile()
+    # Kept for compatibility or can be removed if main.py is updated
+    return KGWorkflow(timeout=60, verbose=True)

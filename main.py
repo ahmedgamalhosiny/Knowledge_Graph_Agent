@@ -1,4 +1,5 @@
 import os
+import asyncio
 import logging
 from dotenv import load_dotenv
 from agent.graph import create_graph
@@ -14,14 +15,14 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("neo4j").setLevel(logging.WARNING)
 
-def main():
+async def main():
     load_dotenv()
 
-    print("\n" + "═"*65)
-    print("  Knowledge Graph Chatbot (LangGraph Edition)")
-    print("═"*65 + "\n")
+    print("\n" + "="*65)
+    print("  Knowledge Graph Chatbot (LlamaIndex Workflow Edition)")
+    print("="*65 + "\n")
 
-    graph = create_graph()
+    workflow = create_graph()
     
     print("Ready! You can tell facts or ask questions.")
     print("Type exit / quit to stop.\n")
@@ -35,20 +36,16 @@ def main():
                 print("\nGoodbye!\n")
                 break
 
-            # Run the graph
-            # Note: LangGraph expects a dict as input matching the AgentState
-            initial_state = {
-                "user_input": user_input,
-                "history": history
-            }
+            # Run the workflow
+            # Step 1: Initialize the workflow run
+            # The StartEvent will be passed to the first step
+            response = await workflow.run(user_input=user_input, history=history)
             
-            final_state = graph.invoke(initial_state)
-            
-            print(f"Bot: {final_state['response']}\n")
+            print(f"Bot: {response}\n")
 
             # Update history (keep last 10 messages)
             history.append({"role": "user", "content": user_input})
-            history.append({"role": "assistant", "content": final_state['response']})
+            history.append({"role": "assistant", "content": response})
             if len(history) > 10:
                 history = history[-10:]
 
@@ -60,4 +57,4 @@ def main():
             print(f"An error occurred. Please try again.\n")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
