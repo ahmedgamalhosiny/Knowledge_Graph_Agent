@@ -1,0 +1,32 @@
+{
+  "person_inquiry": {
+    "description": "Triggered when asking about a specific person or individual.",
+    "trigger_keywords": ["who is", "tell me about", "what do you know about", "what about", "einstein", "newton", "curie", "tesla"],
+    "questions": [
+      {"id": "identity",   "query_template": "Who is {entity}?",              "weight": 10},
+      {"id": "birthplace", "query_template": "Where was {entity} born?",      "weight": 6},
+      {"id": "work",       "query_template": "What did {entity} work on?",    "weight": 8},
+      {"id": "awards",     "query_template": "What awards did {entity} win?", "weight": 4}
+    ]
+  },
+  "concept_inquiry": {
+    "description": "Triggered when asking about a concept, theory, or idea.",
+    "trigger_keywords": ["what is", "explain", "describe", "theory", "concept", "law of"],
+    "questions": [
+      {"id": "definition", "query_template": "What is {entity}?",                    "weight": 10},
+      {"id": "origin",     "query_template": "Who created or discovered {entity}?",  "weight": 7},
+      {"id": "usage",      "query_template": "What is {entity} used for?",           "weight": 5},
+      {"id": "examples",   "query_template": "Give examples of {entity}.",           "weight": 3}
+    ]
+  },
+  "location_inquiry": {
+    "description": "Triggered when asking about a place or location.",
+    "trigger_keywords": ["where is", "location of", "country", "city", "region", "capital"],
+    "questions": [
+      {"id": "location",   "query_template": "Where is {entity}?",                    "weight": 10},
+      {"id": "population", "query_template": "What is the population of {entity}?",   "weight": 5},
+      {"id": "known_for",  "query_template": "What is {entity} known for?",           "weight": 7},
+      {"id": "language",   "query_template": "What language is spoken in {entity}?",  "weight": 4}
+    ]
+  }
+}

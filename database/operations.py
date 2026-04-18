@@ -40,44 +40,53 @@ def db_add_or_edit(driver: Driver, triple: Dict, original_text: str) -> str:
         logger.error("Add/Edit error: %s", e)
         return f"Failed to store {subj} {pred} {obj}"
 
-def db_inquire(driver: Driver, triple: Dict) -> List[str]:
-    # Search for entity relations
-    entity = (triple.get("subject") or triple.get("object") or "").strip()
-    if not entity:
+def db_inquire(driver: Driver, entities: List[str]) -> List[str]:
+    # Search for entity relations in bulk
+    cleaned_entities = [e.strip() for e in entities if e and e.strip()]
+    if not cleaned_entities:
         return []
 
     cypher_exact = """
+    UNWIND $ents AS ent
     MATCH (e:Entity)-[r]-(other:Entity)
-    WHERE toLower(e.name) = toLower($ent)
-    RETURN e.name AS center,
+    WHERE toLower(e.name) = toLower(ent)
+    RETURN DISTINCT e.name AS center,
            type(r) AS rel,
            other.name AS target,
            CASE WHEN startNode(r) = e THEN '→' ELSE '←' END AS dir
-    ORDER BY rel
-    LIMIT 15
+    ORDER BY center, rel
+    LIMIT 50
     """
 
+    # Build a single Lucene query string: "EntityA~ OR EntityB~"
+    # The '~' suffix enables fuzzy matching in the Lucene engine.
+    # CALL db.index.fulltext.queryNodes requires a single string argument,
+    # so we cannot UNWIND inside it — we compose the query in Python instead.
+    lucene_query = " OR ".join(f"{e}~" for e in cleaned_entities)
+
     cypher_fuzzy = """
-    MATCH (e:Entity)-[r]-(other:Entity)
-    WHERE toLower(e.name) CONTAINS toLower($ent)
-    RETURN e.name AS center,
+    CALL db.index.fulltext.queryNodes("entityNameIndex", $query_str) YIELD node AS e
+    MATCH (e)-[r]-(other:Entity)
+    RETURN DISTINCT e.name AS center,
            type(r) AS rel,
            other.name AS target,
            CASE WHEN startNode(r) = e THEN '→' ELSE '←' END AS dir
-    ORDER BY e.name, rel
-    LIMIT 15
+    ORDER BY center, rel
+    LIMIT 50
     """
+
+    entity_label = ", ".join(f"'{e}'" for e in cleaned_entities)
 
     try:
         with driver.session() as session:
-            rows = list(session.run(cypher_exact, ent=entity))
+            rows = list(session.run(cypher_exact, ents=cleaned_entities))
 
             if not rows:
-                rows = list(session.run(cypher_fuzzy, ent=entity))
+                rows = list(session.run(cypher_fuzzy, query_str=lucene_query))
                 if rows:
-                    logger.info("Exact match not found for '%s'; using fuzzy results.", entity)
+                    logger.info("Exact match not found for %s; using fuzzy results.", cleaned_entities)
                 else:
-                    return [f"No information about '{entity}' found in the database."]
+                    return [f"No information about {entity_label} found in the database."]
 
         return [
             f"{r['center']} {r['dir']} [{r['rel']}] {r['target']}"
